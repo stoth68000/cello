@@ -69,29 +69,6 @@ void V210_write_32bit_value(void *frame_bytes, uint32_t stride, uint32_t value, 
 	}
 }
 
-#if 0
-uint32_t V210_read_32bit_value(void *frame_bytes, uint32_t stride, uint32_t lineNr)
-{
-	int xpos = 0;
-	uint32_t bits = 0;
-	for (int i = 0; i < 32; i++) {
-		xpos = (i * V210_BOX_HEIGHT) + (V210_BOX_HEIGHT / 2);
-		/* Sample the pixel two lines deeper than the initial line, and eight pixels in from the left */
-		uint32_t *addr = ((uint32_t *)frame_bytes) + ((lineNr + 2) * (stride / 4));
-		addr += ((xpos / 6) * 4);
-
-		bits <<= 1;
-
-		/* Sample the pixel.... Compressor will decimate, we'll need a luma threshold for production. */
-		if ((addr[1] & 0x3ff) > 0x080)
-			bits |= 1;
-	}
-#if LOCAL_DEBUG
-	printf("%s(%p) = 0x%08x\n", __func__, frame_bytes, bits);
-#endif
-	return bits;
-}
-#else
 uint32_t V210_read_32bit_value(void *frame_bytes, uint32_t stride, uint32_t lineNr, double scalefactor)
 {
 	double pixheight = V210_BOX_HEIGHT * scalefactor;
@@ -116,4 +93,3 @@ uint32_t V210_read_32bit_value(void *frame_bytes, uint32_t stride, uint32_t line
 #endif
 	return bits;
 }
-#endif
