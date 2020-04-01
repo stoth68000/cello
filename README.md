@@ -28,7 +28,7 @@ Cello outputs the statistics to the console.
 Cello outputs a copy of the port D signal on Port B, and burns into the signal additional
 information, including the measured latency.
 
-# License
+## License
 
 	LGPL-V2.1
 	See the included lgpl-2.1.txt for the complete license agreement.
@@ -41,4 +41,15 @@ information, including the measured latency.
     ./autogen.sh --build
     ./configure
     make
+
+## Features
+* Any reasonable framerate (29.97, 30, 59.94, 60) is supported and the blackbox may adjust the framerate
+* Any HD video format is supported (720p 1080i/p), the blackbox may adjust the format.
+* Once running, if cello detects 2 seconds of video loss, the process self terminates.
+* The output on port B allows production staff to use the product with no access to Linux consoles, as a pure video appliance.
+
+## Known Limitations
+* Only video is processed, no audio is pushed or received from the blackbox workflow.
+* No support for SD formats.
+* Tested and developed on Linux.
 
