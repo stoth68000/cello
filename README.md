@@ -2,7 +2,7 @@
 
 Cello - A tool to measure video latency in a SDI workflow.
 
-# LICENSE
+# License
 
 	LGPL-V2.1
 	See the included lgpl-2.1.txt for the complete license agreement.
