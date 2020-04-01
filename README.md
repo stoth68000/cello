@@ -1,6 +1,6 @@
 # Introduction
 
-Cello - A Tool to measure video latency in a SDI workflow.
+Cello - A tool to measure video latency in a SDI workflow.
 
 # LICENSE
 
