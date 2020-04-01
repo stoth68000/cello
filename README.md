@@ -59,3 +59,5 @@ information, including the measured latency.
 * Support for NDI workflows.
 * Support for hybrid SDI/NDI workflows.
 * Minimal web-server, presenting thumbnails and latency calculations for remote use.
+* systemd scripts to start the process on boot, and restart on LOS termination.
+
