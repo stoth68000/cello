@@ -43,7 +43,7 @@ information, including the measured latency.
     make
 
 ## Features
-* Any reasonable framerate (29.97, 30, 59.94, 60) is supported and the blackbox may adjust the framerate
+* Any reasonable framerate (29.97, 30, 59.94, 60) is supported and the blackbox may adjust the framerate.
 * Any HD video format is supported (720p 1080i/p), the blackbox may adjust the format.
 * Once running, if cello detects 2 seconds of video loss, the process self terminates.
 * The output on port B allows production staff to use the product with no access to Linux consoles, as a pure video appliance.
@@ -51,5 +51,11 @@ information, including the measured latency.
 ## Known Limitations
 * Only video is processed, no audio is pushed or received from the blackbox workflow.
 * No support for SD formats.
+* No support for VANC processing.
 * Tested and developed on Linux.
 
+## Todo
+* Audio support.
+* Support for NDI workflows.
+* Support for hybrid SDI/NDI workflows.
+* Minimal web-server, presenting thumbnails and latency calculations for remote use.
