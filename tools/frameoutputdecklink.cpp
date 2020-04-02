@@ -1,6 +1,8 @@
 #include "frameoutputdecklink.h"
 #include <sys/time.h>
 
+#include "videoformats.h"
+
 #define LOCAL_DEBUG 0
 
 frameoutputdecklink::frameoutputdecklink(frameinput *input)
@@ -92,14 +94,20 @@ int frameoutputdecklink::hardware_open(int portnr)
 	pOutput->SetAudioCallback(NULL);
 	//if (pOutput->EnableVideoOutput(bmdModeHD1080i5994, bmdVideoOutputFlagDefault) != S_OK) {
 
-	unsigned int mode = 0;
-	if (getWidth() == 1280 && getHeight() == 720 && getTimebaseNum() == 60000 && getTimebaseDen() == 1001)
-		mode = bmdModeHD720p5994;
+	/* TODO: Improve this. Needs a lookup table for all supported modes and related declink modes. */
+	struct videoFormat_s q;
+	q.width = getWidth();
+	q.height = getHeight();
+	q.progressive = getProgressive();
+	q.fps = getFPS();
+	const struct videoFormat_s *fmt = findVideoFormatByFormat(&q);
+	if (fmt == NULL) {
+		dumpVideoFormat(&q);
+		printf("TODO: decklink output lookup, fix me\n");
+		exit(1);
+	}
 
-	if (getWidth() == 1920 && getHeight() == 1080 && getTimebaseNum() == 30000 && getTimebaseDen() == 1001)
-		mode = bmdModeHD1080i5994;
-
-	if (pOutput->EnableVideoOutput(mode, bmdVideoOutputFlagDefault) != S_OK) {
+	if (pOutput->EnableVideoOutput(fmt->BMDDisplayMode, bmdVideoOutputFlagDefault) != S_OK) {
 		fprintf(stderr, "Unable to enable output\n");
 	}
 
