@@ -65,7 +65,7 @@ protected:
 
 	void setWidth(int width) { this->width = width; };
 	void setHeight(int height) { this->height = height; };
-	void setProgressive(bool tf) { this->progressive = progressive; };
+	void setProgressive(bool tf) { this->progressive = tf; };
 	void setTimebase(AVRational timebase) { this->timebase = timebase; };
 };
 
