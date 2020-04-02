@@ -18,6 +18,7 @@ endif
 CXXFLAGS = $(CFLAGS) -std=c++11
 
 SRC  = osd.c
+SRC += videoformats.c
 SRC += v210.cpp
 SRC += filter.cpp
 SRC += filtervectorscope.cpp
