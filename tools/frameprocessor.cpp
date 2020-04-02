@@ -43,3 +43,11 @@ const char *frameprocessor::humanFormatDescription()
 	return asciiFormat;
 }
 
+double frameprocessor::getFPS()
+{
+	double x = (double)timebase.num / (double)timebase.den;
+	x *= 100.0;
+	int y = x;
+	x = (double)y / 100.0;
+	return x;
+};
