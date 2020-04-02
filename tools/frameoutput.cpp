@@ -14,6 +14,7 @@ frameoutput::frameoutput(frameinput *input)
 		setWidth(input->getWidth());
 		setHeight(input->getHeight());
 		setTimebase(input->getTimebase());
+		setProgressive(input->getProgressive());
 	}
 }
 
