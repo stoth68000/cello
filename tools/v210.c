@@ -12,14 +12,14 @@
 #define cb_white 0x200
 
 /* Six pixels */
-static uint32_t white[] = {
+uint32_t white[] = {
 	 cr_white << 20 |  y_white << 10 | cb_white,
 	  y_white << 20 | cb_white << 10 |  y_white,
 	 cb_white << 20 |  y_white << 10 | cr_white,
 	  y_white << 20 | cr_white << 10 |  y_white,
 };
 
-static uint32_t black[] = {
+uint32_t black[] = {
 	 cr_white << 20 |  y_black << 10 | cb_white,
 	  y_black << 20 | cb_white << 10 |  y_black,
 	 cb_white << 20 |  y_black << 10 | cr_white,

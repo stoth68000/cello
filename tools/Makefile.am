@@ -19,7 +19,7 @@ CXXFLAGS = $(CFLAGS) -std=c++11
 
 SRC  = osd.c
 SRC += videoformats.c
-SRC += v210.cpp
+SRC += v210.c
 SRC += filter.cpp
 SRC += filtervectorscope.cpp
 SRC += framebase.cpp
