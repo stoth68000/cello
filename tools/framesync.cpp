@@ -116,6 +116,11 @@ static void *threadfunc(void *p)
 
 		ctx->fpbw->clearMessages();
 
+		int los = 0;
+		if (frameNr[0] && frameNr[1] == 0) {
+			los = 1;
+		}
+
 		/* Date / time */
 		time_t now;
 		time(&now);
@@ -126,10 +131,15 @@ static void *threadfunc(void *p)
 
 		/* Basic I/O connection information */
 		char msg[256], msg2[256];
-		sprintf(msg, "latency %s -> %s = %" PRIi64 "ms\n",
-			ctx->fo->getName(),
-			ctx->fi->getName(),
-			ms);
+		if (!los) {
+			sprintf(msg, "latency %s -> %s = %" PRIi64 "ms\n",
+				ctx->fo->getName(),
+				ctx->fi->getName(),
+				ms);
+		} else {
+			sprintf(msg, "%s -- no signal - check cabling\n",
+				ctx->fi->getName());
+		}
 		ctx->fpbw->addMessage(msg, 0, 11);
 
 		/* Signal formats */
