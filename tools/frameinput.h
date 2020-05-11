@@ -20,6 +20,12 @@ class frameinput : public frameprocessor, public framemetadata, public threadbas
 public:
 	frameinput();
 	~frameinput();
+
+	void setLosTerminate(bool v);
+	bool getLosTerminate();
+
+private:
+	bool m_losTerminate;
 };
 
 #endif /* FRAMEINPUT_H */
