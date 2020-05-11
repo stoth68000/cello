@@ -167,7 +167,7 @@ printf("input frameNr = %d, sec %lu, usec %lu\n", frameNr, ts.tv_sec, ts.tv_usec
 
 			if (frameNr == 0) {
 				zeroIdFrames++;
-				if (zeroIdFrames >= (getFPS() * 2)) {
+				if (getLosTerminate() && zeroIdFrames >= (getFPS() * 2)) {
 					printf("LOS on input\n");
 					exit(1);
 				}
