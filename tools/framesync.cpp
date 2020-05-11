@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <getopt.h>
 #include <readline/readline.h>
 #include <readline/history.h>
 
@@ -162,6 +163,13 @@ static void *threadfunc(void *p)
 	return NULL;
 }
 
+static void usage()
+{
+	printf("-L <0|1> - Enable or disable process termination when decklink LOS condition occurs. [def: 1]\n");
+	printf("           Used when you have a static workflow where the input frames are not expected to change format.\n");
+	printf("\n");
+}
+
 int main(int argc, char *argv[])
 {
 	list<class frameinput *>::iterator ei;
@@ -172,10 +180,27 @@ int main(int argc, char *argv[])
 	int selected_input = -1;
 	int selected_output = -1;
 	struct thread_monitor_s ctx;
+	bool opt_losTerminate = true;
 
 	printf("cello - a tool to measure SDI video latency\n");
 	printf("version: %s\n", GIT_VERSION);
 	printf("\n");
+
+	int opt;
+	while ((opt = getopt(argc, argv, "?hL:")) != -1) {
+		switch (opt) {
+		case 'L':
+			opt_losTerminate = atoi(optarg);
+			break;
+		case '?':
+		case 'h':
+			usage();
+			exit(0);
+		default:
+			usage();
+			exit(0);
+		}
+	}
 
 	/* Decklink port #0 - Input - source material, we'll metadat stamp this and output it */
 	frameinputdecklink2 *fid2 = new frameinputdecklink2();
@@ -203,6 +228,7 @@ int main(int argc, char *argv[])
 	fid2->setDebug(true);
 	fid2->setReadMetadataOnArrival(true);
 	fid2->setWriteMetadataOnArrival(true);
+	fid2->setLosTerminate(opt_losTerminate);
 	fid2->hardware_open(3);
 	m_inputs.push_back(fid2);
 
