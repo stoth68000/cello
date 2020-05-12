@@ -3,6 +3,12 @@
 
 #include "frameprocessor.h"
 
+struct frame_metadata_s
+{
+	uint32_t frameNr;
+	struct timeval ts;
+};
+
 class framemetadata
 {
 public:
@@ -16,6 +22,9 @@ public:
 
 	int getMetadata(uint32_t *frameNr, struct timeval *when);
 	int setMetadata(uint32_t frameNr, struct timeval *when);
+
+	struct frame_metadata_s *getSideDataAlloc();
+
 private:
 	int readMetadataOnArrival;
 	int writeMetadataOnArrival;

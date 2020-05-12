@@ -123,6 +123,7 @@ int frameinputdecklink2::threadRun()
 #if LOCAL_DEBUG
 	printf("decklink2 thread starts\n");
 #endif
+	uint32_t lastFrameNr = 0;
 	while (!terminate) {
 		AVPacket *pkt = av_packet_alloc();
 		int ret = av_read_frame(ifmt_ctx, pkt);
@@ -160,6 +161,18 @@ int frameinputdecklink2::threadRun()
 			frameNr = V210_read_32bit_value(pkt->data, instride, V210_BOX_HEIGHT * 0 /* LineNr */, sf);
 			ts.tv_sec = V210_read_32bit_value(pkt->data, instride, V210_BOX_HEIGHT * 1 /* LineNr */, sf);
 			ts.tv_usec = V210_read_32bit_value(pkt->data, instride, V210_BOX_HEIGHT * 2 /* LineNr */, sf);
+
+                        if (lastFrameNr && lastFrameNr == frameNr) {
+                                incDuplicateFrameCount();
+                        }
+                        if (lastFrameNr == 0 && frameNr > 0) {
+				lastFrameNr = frameNr - 1;
+			} else
+                        if (lastFrameNr + 1 != frameNr) {
+                                addLostFrameCount(frameNr - lastFrameNr);
+                                lastFrameNr = frameNr;
+                        }
+			lastFrameNr = frameNr;
 
 #if 0
 printf("input frameNr = %d, sec %lu, usec %lu\n", frameNr, ts.tv_sec, ts.tv_usec);
@@ -211,6 +224,11 @@ printf("input frameNr = %d, sec %lu, usec %lu\n", frameNr, ts.tv_sec, ts.tv_usec
 		}
 
 		setMetadata(frameNr, &ts);
+
+		//frm->side_data = (AVFrameSideData **)av_malloc(sizeof(AVFrameSideData *));
+		//frm->nb_side_data = 1;
+		//frm->side_data[0] = getSideDataAlloc();
+		frm->opaque = getSideDataAlloc();
 
 		incrementFramesProcessed();
 		av_packet_unref(pkt);

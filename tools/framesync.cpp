@@ -106,6 +106,8 @@ static void *threadfunc(void *p)
 	while (!ctx->terminate) {
 		usleep(100 * 1000);
 
+		int line = 8;
+
 		uint32_t frameNr[3];
 		struct timeval ts[3];
 		ctx->fo->getMetadata(&frameNr[0], &ts[0]);
@@ -122,32 +124,44 @@ static void *threadfunc(void *p)
 			los = 1;
 		}
 
+		/* Basic I/O connection information */
+		char msg[256], msg2[256];
+
+		sprintf(msg2, "Cello Version: %s", GIT_VERSION);
+		ctx->fpbw->addMessage(msg2, 12, line++);
+		line++;
+
 		/* Date / time */
 		time_t now;
 		time(&now);
 		char str[128];
 		sprintf(str, "%s", ctime(&now));
 		str[ strlen(str) - 1] = 0;
-		ctx->fpbw->addMessage(str, 0, 8);
+		ctx->fpbw->addMessage(str, 12, line++);
 
-		/* Basic I/O connection information */
-		char msg[256], msg2[256];
-		if (!los) {
-			sprintf(msg, "latency %s -> %s = %" PRIi64 "ms\n",
-				ctx->fo->getName(),
-				ctx->fi->getName(),
-				ms);
-		} else {
-			sprintf(msg, "%s -- no signal - check cabling\n",
-				ctx->fi->getName());
-		}
-		ctx->fpbw->addMessage(msg, 0, 11);
+		line++;
 
 		/* Signal formats */
-		sprintf(msg2, "%s -> %s",
-			ctx->fo->humanFormatDescription(),
-			ctx->fi->humanFormatDescription());
-		ctx->fpbw->addMessage(msg2, 0, 12);
+
+		sprintf(msg2, "  -> output: %s", ctx->fo->humanFormatDescription());
+		ctx->fpbw->addMessage(msg2, 12, line++);
+
+		sprintf(msg2, "  <-  input: %s", ctx->fi->humanFormatDescription());
+		ctx->fpbw->addMessage(msg2, 12, line++);
+
+		if (!los)
+			sprintf(msg2, "    latency: %dms", ms);
+		else
+			sprintf(msg2, "    latency: No signal");
+		ctx->fpbw->addMessage(msg2, 12, line++);
+
+		line++;
+
+		sprintf(msg2, "lost frames: %d", ctx->fi->getLostFrameCount());
+		ctx->fpbw->addMessage(msg2, 12, line++);
+
+		sprintf(msg2, " dup frames: %d", ctx->fi->getDuplicateFrameCount());
+		ctx->fpbw->addMessage(msg2, 12, line++);
 
 		if (now != lastConsoleUpdate) {
 			lastConsoleUpdate = now;

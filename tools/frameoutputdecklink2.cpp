@@ -270,6 +270,8 @@ int frameoutputdecklink2::threadRun()
 #if LOCAL_DEBUG
 	printf("%s() decklink2 thread starting\n", __func__);
 #endif
+	uint32_t lastFrameNr = 0;
+
 	int ret;
 	while (!terminate) {
 		ret = q.waitForFrame();
@@ -435,4 +437,3 @@ int frameoutputdecklink2::threadRun()
 #endif
 	return 0;
 }
-

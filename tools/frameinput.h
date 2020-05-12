@@ -24,8 +24,16 @@ public:
 	void setLosTerminate(bool v);
 	bool getLosTerminate();
 
+	int getLostFrameCount();
+	int getDuplicateFrameCount();
+	void addLostFrameCount(int n);
+	void incDuplicateFrameCount();
+
 private:
 	bool m_losTerminate;
+
+	int m_lostFrames;
+	int m_dupFrames;
 };
 
 #endif /* FRAMEINPUT_H */
