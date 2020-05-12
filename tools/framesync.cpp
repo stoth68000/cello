@@ -150,10 +150,10 @@ static void *threadfunc(void *p)
 		ctx->fpbw->addMessage(msg2, 12, line++);
 
 		if (!los)
-			sprintf(msg2, "    latency: %dms", ms);
+			sprintf(msg, "    latency: %dms", ms);
 		else
-			sprintf(msg2, "    latency: No signal");
-		ctx->fpbw->addMessage(msg2, 12, line++);
+			sprintf(msg, "    latency: No signal");
+		ctx->fpbw->addMessage(msg, 12, line++);
 
 		line++;
 
