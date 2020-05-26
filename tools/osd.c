@@ -1329,9 +1329,14 @@ int vc8x0_display_render_reset(struct vc8x0_display_context *ctx, u8 *ptr, int w
 	ctx->ptr = ptr;
 	ctx->frame = ptr;
 	ctx->stride = (int)stride;
-    
-	ctx->plotwidth = 16;
-	ctx->plotheight = 16;
+
+	if (width >= 1920) {
+		ctx->plotwidth = 32;
+		ctx->plotheight = 32;
+	} else {
+		ctx->plotwidth = 16;
+		ctx->plotheight = 16;
+	}
     
 	vc8x0_display_render_moveto(ctx, 0, 0);
     
