@@ -61,3 +61,5 @@ information, including the measured latency.
 * Minimal web-server, presenting thumbnails and latency calculations for remote use.
 * systemd scripts to start the process on boot, and restart on LOS termination.
 
+## Deps
+* sudo yum install libxcb-devel freetype-devel
