@@ -216,7 +216,7 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	/* Decklink port #0 - Input - source material, we'll metadat stamp this and output it */
+	/* Decklink port #0 - Input - source material, we'll metadata stamp this and output it */
 	frameinputdecklink2 *fid2 = new frameinputdecklink2();
 	//fid2->setDebug(true);
 	fid2->hardware_open(0);
