@@ -92,7 +92,7 @@ int frameoutputndi::threadRun()
 		ret = q.pop(&frm, &id);
 
 		if (!playing) {
-			av_frame_unref(frm);
+			av_frame_free(&frm);
 			continue;
 		}
 
@@ -149,7 +149,7 @@ int frameoutputndi::threadRun()
 
 		incrementFramesProcessed();
 
-		av_frame_unref(frm);
+		av_frame_free(&frm);
 	}
 	complete();
 #if LOCAL_DEBUG

@@ -1,3 +1,4 @@
+
 #ifndef FRAMEMETADATA_H
 #define FRAMEMETADATA_H
 

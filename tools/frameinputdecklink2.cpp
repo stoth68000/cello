@@ -20,9 +20,7 @@ frameinputdecklink2::frameinputdecklink2()
 		fprintf(stderr, "unable to alloc codec\n");
 	}
 
-	AVDictionary *opts = NULL;
-	av_dict_set(&opts, "refcounted_frames", "1", 0);
-	if (avcodec_open2(codec, dec, &opts) < 0) {
+	if (avcodec_open2(codec, dec, NULL) < 0) {
 		fprintf(stderr, "unable to open2 codec\n");
 	}
 }
@@ -105,10 +103,10 @@ printf("Human name: %s\n", ifmt_ctx->iformat->long_name);
 	codec->width = in_codecpar->width;
 	codec->height = in_codecpar->height;
 
-        threadStart();
+    threadStart();
 
 #if LOCAL_DEBUG
-        printf("%s() ok\n", __func__);
+	printf("%s() ok\n", __func__);
 #endif
 
 	return 0; /* Success */
@@ -131,7 +129,7 @@ int frameinputdecklink2::threadRun()
 			break;
 
 		if (pkt->stream_index != in_stream->index) {
-			av_packet_unref(pkt);
+			av_packet_free(&pkt);
 			continue;
 		}
 #if LOCAL_DEBUG
@@ -161,17 +159,24 @@ int frameinputdecklink2::threadRun()
 			frameNr = V210_read_32bit_value(pkt->data, instride, V210_BOX_HEIGHT * 0 /* LineNr */, sf);
 			ts.tv_sec = V210_read_32bit_value(pkt->data, instride, V210_BOX_HEIGHT * 1 /* LineNr */, sf);
 			ts.tv_usec = V210_read_32bit_value(pkt->data, instride, V210_BOX_HEIGHT * 2 /* LineNr */, sf);
+			uint32_t marker = V210_read_32bit_value(pkt->data, instride, V210_BOX_HEIGHT * 3 /* LineNr */, sf);
 
-                        if (lastFrameNr && lastFrameNr == frameNr) {
-                                incDuplicateFrameCount();
-                        }
-                        if (lastFrameNr == 0 && frameNr > 0) {
+			if (marker != 0xA0018003) {
+				setMissingMetadata(1);
+			} else {
+				setMissingMetadata(0);
+			}
+
+			if (lastFrameNr && lastFrameNr == frameNr) {
+				incDuplicateFrameCount();
+			}
+			if (lastFrameNr == 0 && frameNr > 0) {
 				lastFrameNr = frameNr - 1;
 			} else
-                        if (lastFrameNr + 1 != frameNr) {
-                                addLostFrameCount(frameNr - lastFrameNr);
-                                lastFrameNr = frameNr;
-                        }
+			if (lastFrameNr + 1 != frameNr) {
+					addLostFrameCount(frameNr - lastFrameNr);
+					lastFrameNr = frameNr;
+			}
 			lastFrameNr = frameNr;
 
 #if 0
@@ -214,24 +219,30 @@ printf("input frameNr = %d, sec %lu, usec %lu\n", frameNr, ts.tv_sec, ts.tv_usec
 			continue;
 		}
 
-		/* Take a standard V210 pixexl format, convert into 422-10bit planer. */
+		/* Take a standard V210 pixel format, convert into 422-10bit planer. */
 		AVFrame *frm = av_frame_alloc();
 
 		ret = avcodec_receive_frame(codec, frm);
 		if (ret < 0 && ret != AVERROR(EAGAIN) && ret != AVERROR_EOF) {
 			av_frame_free(&frm);
+			av_packet_free(&pkt);
 			continue;
 		}
 
 		setMetadata(frameNr, &ts);
 
+/* TODO: Put the metadata on the frame itself, don't use opaque, use side_data */
 		//frm->side_data = (AVFrameSideData **)av_malloc(sizeof(AVFrameSideData *));
 		//frm->nb_side_data = 1;
 		//frm->side_data[0] = getSideDataAlloc();
+#if 0
 		frm->opaque = getSideDataAlloc();
+#endif
 
 		incrementFramesProcessed();
-		av_packet_unref(pkt);
+		av_packet_free(&pkt);
+
+		/* Put this new frame on our output q. */
 		q.push(frm, 0);
 
 	}

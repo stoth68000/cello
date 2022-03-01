@@ -1,11 +1,11 @@
 #ifndef FRAMEPIPE_H
 #define FRAMEPIPE_H
 
-/* framepipes attach to a single source q, reference count
- * the frames in the source q and make referenced copies
- * of those frames, adding those copies to any output q's
- * that have been attached to the class.
- * a 1-to-many relationship.
+/* framepipes attach to a single source q, clone copies of
+ * frames and put them on all of the output queues.
+ * I tried initially using frame reference counting and had issues
+ * related to _unref not correctly tidying up.
+ * I switch back to non-referenced frames March 2022.
  */
 #include "framequeue.h"
 #include "threadbase.h"

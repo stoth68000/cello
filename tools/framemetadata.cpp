@@ -54,6 +54,11 @@ int framemetadata::setMetadata(uint32_t frameNr, struct timeval *when)
 	return 0;
 }
 
+#if 0
+/* TODO: Add metadat to each and every frame, instead of the inputs or outputs.
+ * The current design for latency is wrong, because it's stamped on the frame.
+ * MAKE SURE THE LIFESPAN OF THIS IS MANAGED ON DESTRUCTION.
+ */
 struct frame_metadata_s *framemetadata::getSideDataAlloc()
 {
 	struct frame_metadata_s *data = (struct frame_metadata_s *)av_malloc(sizeof(*data));
@@ -63,4 +68,4 @@ struct frame_metadata_s *framemetadata::getSideDataAlloc()
 
 	return data;
 }
-
+#endif

@@ -23,7 +23,7 @@ public:
         virtual HRESULT STDMETHODCALLTYPE RenderAudioSamples(bool preroll);
 
 private:
-	void ScheduleNextFrame(bool prerolling);
+	void ScheduleNextFrame(bool prerolling, IDeckLinkMutableVideoFrame *frame);
 
 	int threadRun();
 
@@ -32,7 +32,7 @@ private:
 	IDeckLinkConfiguration *pConfig;
 	IDeckLinkDisplayMode *pDisplayMode;
 	IDeckLinkVideoFrame *pFrame;
-	IDeckLinkMutableVideoFrame *referenceFrame;
+	//IDeckLinkMutableVideoFrame *referenceFrame;
 	uint64_t m_totalFramesScheduled;
 	int m_running;
 

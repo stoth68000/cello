@@ -1,3 +1,4 @@
+#if 0
 #include "frameinputdecklink.h"
 
 #include <dlfcn.h>
@@ -22,9 +23,7 @@ frameinputdecklink::frameinputdecklink()
 		fprintf(stderr, "unable to alloc codec\n");
 	}
 
-	AVDictionary *opts = NULL;
-	av_dict_set(&opts, "refcounted_frames", "1", 0);
-	if (avcodec_open2(codec, dec, &opts) < 0) {
+	if (avcodec_open2(codec, dec, NULL) < 0) {
 		fprintf(stderr, "unable to open2 codec\n");
 	}
 }
@@ -239,7 +238,7 @@ HRESULT frameinputdecklink::VideoInputFrameArrived(IDeckLinkVideoInputFrame *vid
 
 	/* Drop frames if we're only looking at metadata */
 //	if (getReadMetadataOnArrival()) {
-//		av_frame_unref(frm);
+//		av_frame_free(&frm);
 //	} else {
 		q.push(frm, frameNr);
 //	}
@@ -250,3 +249,5 @@ HRESULT frameinputdecklink::VideoInputFrameArrived(IDeckLinkVideoInputFrame *vid
 
 	return S_OK;
 }
+
+#endif

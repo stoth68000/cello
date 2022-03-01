@@ -287,13 +287,13 @@ int frameoutputdecklink2::threadRun()
 		ret = q.pop(&frm, &id);
 
 		if (!playing) {
-			av_frame_unref(frm);
+			av_frame_free(&frm);
 			continue;
 		}
 
 		if (frm->format != AV_PIX_FMT_YUV422P10) {
 			/* We only support output of 422P10 */
-			av_frame_unref(frm);
+			av_frame_free(&frm);
 			continue;
 		}
 
@@ -325,8 +325,6 @@ int frameoutputdecklink2::threadRun()
 			}
 			codec->time_base.num = getTimebaseDen();
 
-			//AVDictionary *opts = NULL;
-			//av_dict_set(&opts, "refcounted_frames", "1", 0);
 			if (avcodec_open2(codec, enc, NULL) < 0) {
 				fprintf(stderr, "unable to open2 codec\n");
 			}
@@ -361,8 +359,8 @@ int frameoutputdecklink2::threadRun()
 		ret = avcodec_receive_packet(codec, pkt);
 		if (ret < 0 && ret != AVERROR(EAGAIN) && ret != AVERROR_EOF) {
 			/* Error, cleanup */
-			av_packet_unref(pkt);
-			av_frame_unref(frm);
+			av_packet_free(&pkt);
+			av_frame_free(&frm);
 			continue;
 		}
 
@@ -391,6 +389,7 @@ int frameoutputdecklink2::threadRun()
 				gettimeofday(&ts, NULL);
 				V210_write_32bit_value((void *)pkt->data, stride, ts.tv_sec, V210_BOX_HEIGHT * 1, 0);
 				V210_write_32bit_value((void *)pkt->data, stride, ts.tv_usec, V210_BOX_HEIGHT * 2, 0);
+				V210_write_32bit_value((void *)pkt->data, stride, 0xA0018003, V210_BOX_HEIGHT * 3, 0);
 
 				setMetadata(burnval, &ts);
 
@@ -418,8 +417,8 @@ int frameoutputdecklink2::threadRun()
 		incrementFramesProcessed();
 
 		/* Cleanup */
-		av_frame_unref(frm);
-		//av_packet_unref(&pkt);
+		av_frame_free(&frm);
+		av_packet_free(&pkt);
 	}
 	av_write_trailer(ofmt_ctx);
 	if (have_video)

@@ -1,3 +1,5 @@
+#if 0
+
 #ifndef FRAMEINPUTDECKLINK_H
 #define FRAMEINPUTDECKLINK_H
 
@@ -61,3 +63,5 @@ public:
 };
 
 #endif /* FRAMEINPUTDECKLINK_H */
+
+#endif

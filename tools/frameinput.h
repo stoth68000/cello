@@ -26,14 +26,20 @@ public:
 
 	int getLostFrameCount();
 	int getDuplicateFrameCount();
+	int getLostCodesCount();
+
 	void addLostFrameCount(int n);
 	void incDuplicateFrameCount();
+	void setMissingMetadata(int n);
+	int isMissingMetadata();
 
 private:
 	bool m_losTerminate;
 
 	int m_lostFrames;
 	int m_dupFrames;
+	int m_missingMetadata;
+	int m_lostCodes;
 };
 
 #endif /* FRAMEINPUT_H */

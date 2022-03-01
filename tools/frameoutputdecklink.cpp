@@ -12,7 +12,7 @@ frameoutputdecklink::frameoutputdecklink(frameinput *input)
 , pConfig(NULL)
 , pDisplayMode(NULL)
 , pFrame(NULL)
-, referenceFrame(NULL)
+//, referenceFrame(NULL)
 , m_totalFramesScheduled(0)
 , m_running(1)
 , codec(NULL)
@@ -83,13 +83,13 @@ int frameoutputdecklink::hardware_open(int portnr)
 	if (pConfig->SetInt(bmdDeckLinkConfigVideoOutputConnection, bmdVideoConnectionSDI) != S_OK) {
 		fprintf(stderr, "unable to set link to SDI\n");
 	}
-
+#if 0
 	int bytesPerPixel = 4;
 	if (pOutput->CreateVideoFrame(getWidth(), getHeight(), getWidth() * bytesPerPixel, bmdFormat10BitYUV,
 		bmdFrameFlagDefault, &referenceFrame) != S_OK) {
 		fprintf(stderr, "Failed to create video frame\n");
 	}
-
+#endif
 	pOutput->SetScheduledFrameCompletionCallback(this);
 	pOutput->SetAudioCallback(NULL);
 	//if (pOutput->EnableVideoOutput(bmdModeHD1080i5994, bmdVideoOutputFlagDefault) != S_OK) {
@@ -153,13 +153,13 @@ int frameoutputdecklink::threadRun()
 		ret = q.pop(&frm, &id);
 
 		if (!playing) {
-			av_frame_unref(frm);
+			av_frame_free(&frm);
 			continue;
 		}
 
 		if (frm->format != AV_PIX_FMT_YUV422P10) {
 			/* We only support output of 422P10 */
-			av_frame_unref(frm);
+			av_frame_free(&frm);
 			continue;
 		}
 
@@ -188,8 +188,6 @@ int frameoutputdecklink::threadRun()
 			}
 			codec->time_base.num = getTimebaseDen();
 
-			//AVDictionary *opts = NULL;
-			//av_dict_set(&opts, "refcounted_frames", "1", 0);
 			if (avcodec_open2(codec, enc, NULL) < 0) {
 				fprintf(stderr, "unable to open2 codec\n");
 			}
@@ -225,8 +223,15 @@ int frameoutputdecklink::threadRun()
 		if (ret < 0 && ret != AVERROR(EAGAIN) && ret != AVERROR_EOF) {
 			/* Error, cleanup */
 			av_packet_free(&pkt);
-			av_frame_unref(frm);
+			av_frame_free(&frm);
 			continue;
+		}
+
+		IDeckLinkMutableVideoFrame *referenceFrame = NULL;
+		int bytesPerPixel = 4;
+		if (pOutput->CreateVideoFrame(getWidth(), getHeight(), getWidth() * bytesPerPixel, bmdFormat10BitYUV,
+			bmdFrameFlagDefault, &referenceFrame) != S_OK) {
+			fprintf(stderr, "Failed to create video frame\n");
 		}
 
 		/* Extract the pixels with a different stride, write to the decklink output frame. */
@@ -262,16 +267,20 @@ int frameoutputdecklink::threadRun()
 			gettimeofday(&ts, NULL);
 			V210_write_32bit_value((void *)ptr, referenceFrame->GetRowBytes(), ts.tv_sec, V210_BOX_HEIGHT * 1, 0);
 			V210_write_32bit_value((void *)ptr, referenceFrame->GetRowBytes(), ts.tv_usec, V210_BOX_HEIGHT * 2, 0);
+			V210_write_32bit_value((void *)ptr, referenceFrame->GetRowBytes(), 0xA0018003, V210_BOX_HEIGHT * 3, 0);
 
 			setMetadata(burnval, &ts);
 		}
 
 		setLastRenderedFrameId(burnval);
-		ScheduleNextFrame(false);
+#if 0
+		printf("output frameNr = %d\n", burnval);
+#endif
+		ScheduleNextFrame(false, referenceFrame);
 		incrementFramesProcessed();
 
 		/* Cleanup */
-		av_frame_unref(frm);
+		av_frame_free(&frm);
 		av_packet_free(&pkt);
 	}
 	complete();
@@ -296,10 +305,12 @@ HRESULT frameoutputdecklink::ScheduledFrameCompleted(
 	IDeckLinkVideoFrame *completedFrame, BMDOutputFrameCompletionResult result)
 {
 	//printf("%s()\n", __func__);
+	completedFrame->Release();
+
 	return S_OK;
 }
 
-void frameoutputdecklink::ScheduleNextFrame(bool prerolling)
+void frameoutputdecklink::ScheduleNextFrame(bool prerolling, IDeckLinkMutableVideoFrame *frame)
 {
 	if (prerolling == false)
 	{
@@ -308,7 +319,7 @@ void frameoutputdecklink::ScheduleNextFrame(bool prerolling)
 			return;
 	}
 
-	if (pOutput->ScheduleVideoFrame(referenceFrame, (m_totalFramesScheduled * getTimebaseDen()), getTimebaseDen(), getTimebaseNum()) != S_OK) {
+	if (pOutput->ScheduleVideoFrame(frame, (m_totalFramesScheduled * getTimebaseDen()), getTimebaseDen(), getTimebaseNum()) != S_OK) {
 		fprintf(stderr, "Send failed\n");
 		return;
 	}

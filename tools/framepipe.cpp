@@ -66,6 +66,7 @@ int framepipe::threadRun()
 	int ret;
 	while (!terminate) {
 		if (!src) {
+			/* Wait for a source to arrive, if it's missing. */
 			usleep(2 * 1000);
 			continue;
 		}
@@ -80,14 +81,14 @@ int framepipe::threadRun()
 
 		ret = transformInPlaceFrame(frm);
 
+		/* Copy the input frame to all of the output q's, then destroy the input frame. */
 		for (int i = 0; i < FRAMEPIPE_MAX_DEST_COUNT; i++) {
 			if (dst[i]) {
-				AVFrame *n = av_frame_alloc();
-				av_frame_ref(n, frm);
+				AVFrame *n = av_frame_clone(frm);
 				ret = dst[i]->push(n, ident);
 			}
 		}
-		av_frame_unref(frm);
+		av_frame_free(&frm);
 	}
 	complete();
 

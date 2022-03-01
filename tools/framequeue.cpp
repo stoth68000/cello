@@ -64,6 +64,7 @@ int framequeue::pop(AVFrame **frm, uint64_t *id)
 			*frm = item->frm;
 			if (id)
 				*id = item->id;
+			free(item);
 		}
 		ret = 0;
 	}

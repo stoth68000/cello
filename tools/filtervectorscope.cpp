@@ -96,11 +96,10 @@ printf("vectorscope thread starts\n");
 #endif
 		incrementFramesProcessed();
 
-		av_frame_unref(frm);
+		av_frame_free(&frm);
 	}
 printf("vectorscope thread stopping\n");
 	complete();
 	printf("vectorscope output stopped\n");
 	return 0;
 }
-

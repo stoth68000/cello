@@ -125,7 +125,7 @@ static void *threadfunc(void *p)
 		}
 
 		/* Basic I/O connection information */
-		char msg[256], msg2[256];
+		char msg[256], msg2[256], msg3[256], msg4[256];
 
 		sprintf(msg2, "Cello Version: %s", GIT_VERSION);
 		ctx->fpbw->addMessage(msg2, 12, line++);
@@ -149,6 +149,10 @@ static void *threadfunc(void *p)
 		sprintf(msg2, "  <-  input: %s", ctx->fi->humanFormatDescription());
 		ctx->fpbw->addMessage(msg2, 12, line++);
 
+		if (ctx->fi->isMissingMetadata()) {
+			los = 1;
+		}
+
 		if (!los)
 			sprintf(msg, "    latency: %dms", ms);
 		else
@@ -160,8 +164,16 @@ static void *threadfunc(void *p)
 		sprintf(msg2, "lost frames: %d", ctx->fi->getLostFrameCount());
 		ctx->fpbw->addMessage(msg2, 12, line++);
 
-		sprintf(msg2, " dup frames: %d", ctx->fi->getDuplicateFrameCount());
-		ctx->fpbw->addMessage(msg2, 12, line++);
+		sprintf(msg3, " dup frames: %d", ctx->fi->getDuplicateFrameCount());
+		ctx->fpbw->addMessage(msg3, 12, line++);
+
+		sprintf(msg4, " lost codes: %d", ctx->fi->getLostCodesCount());
+		ctx->fpbw->addMessage(msg4, 12, line++);
+
+		if (ctx->fi->isMissingMetadata()) {
+			line++;
+			ctx->fpbw->addMessage("Metadata missing, check signal path", 12, line++);
+		}
 
 		if (now != lastConsoleUpdate) {
 			lastConsoleUpdate = now;
@@ -170,7 +182,7 @@ static void *threadfunc(void *p)
 			sprintf(ts, ctime(&now));
 			ts[ strlen(ts) - 1] = 0;
 			printf("%s: %s", ts, msg);
-			printf("\t%s\n", msg2);
+			printf("\t%s %s %s\n", msg2, msg3, msg4);
 		}
 	}
 
@@ -236,6 +248,7 @@ int main(int argc, char *argv[])
 	fp->addOutputQueue( fod2->getQueue() );
 	fp->threadStart();
 
+// while 1
 
 	/* Decklink port #3 - Input - source material post workflow, we'll analyze the metadata */
 	fid2 = new frameinputdecklink2();
@@ -250,7 +263,7 @@ int main(int argc, char *argv[])
 	ctx.fo = fod2;
 	ctx.fi = fid2;
 
-	/* If we detect a resolution difference between the metadat output signal
+	/* If we detect a resolution difference between the metadata output signal
 	 * to the blackbox, and the returned SDI signal from the black box,
 	 * calculate the scaling difference between the two and pass this
 	 * into the input object, so it can correctly decode the metadata.
