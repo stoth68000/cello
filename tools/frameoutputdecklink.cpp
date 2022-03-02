@@ -113,6 +113,9 @@ int frameoutputdecklink::hardware_open(int portnr)
 
 	pOutput->StartScheduledPlayback(0, 100, 1.0);
 
+	for (int i = 0; i < 7; i++)
+		ScheduleNextPrerollFrame();
+
 	threadStart();
 
 #if LOCAL_DEBUG
@@ -324,6 +327,18 @@ HRESULT frameoutputdecklink::ScheduledFrameCompleted(IDeckLinkVideoFrame *comple
 	return S_OK;
 }
 
+void frameoutputdecklink::ScheduleNextPrerollFrame()
+{
+	IDeckLinkMutableVideoFrame *frame = NULL;
+
+	int bytesPerPixel = 4;
+	if (pOutput->CreateVideoFrame(getWidth(), getHeight(), getWidth() * bytesPerPixel, bmdFormat10BitYUV, bmdFrameFlagDefault, &frame) != S_OK) {
+		fprintf(stderr, "Failed to create preroll video frame\n");
+	}
+
+	ScheduleNextFrame(true, frame);
+}
+
 void frameoutputdecklink::ScheduleNextFrame(bool prerolling, IDeckLinkMutableVideoFrame *frame)
 {
 	if (prerolling == false)
@@ -331,6 +346,12 @@ void frameoutputdecklink::ScheduleNextFrame(bool prerolling, IDeckLinkMutableVid
 		// If not prerolling, make sure that playback is still active
 		if (m_running == false)
 			return;
+	}
+
+	uint32_t v;
+	pOutput->GetBufferedVideoFrameCount(&v);
+	if (v <= 2) {
+		printf("\t\t%d\n", v);
 	}
 
 	if (pOutput->ScheduleVideoFrame(frame, (m_totalFramesScheduled * getTimebaseDen()), getTimebaseDen(), getTimebaseNum()) != S_OK) {

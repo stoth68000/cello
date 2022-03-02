@@ -24,6 +24,7 @@ public:
 
 private:
 	void ScheduleNextFrame(bool prerolling, IDeckLinkMutableVideoFrame *frame);
+	void ScheduleNextPrerollFrame();
 
 	int threadRun();
 
