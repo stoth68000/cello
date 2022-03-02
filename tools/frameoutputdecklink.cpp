@@ -301,11 +301,25 @@ HRESULT frameoutputdecklink::ScheduledPlaybackHasStopped()
         return S_OK;
 }
 
-HRESULT frameoutputdecklink::ScheduledFrameCompleted(
-	IDeckLinkVideoFrame *completedFrame, BMDOutputFrameCompletionResult result)
+HRESULT frameoutputdecklink::ScheduledFrameCompleted(IDeckLinkVideoFrame *completedFrame, BMDOutputFrameCompletionResult result)
 {
-	//printf("%s()\n", __func__);
 	completedFrame->Release();
+
+	switch (result) {
+		case bmdOutputFrameCompleted:
+			break;
+		case bmdOutputFrameDisplayedLate:
+			printf("%s() frame displayed late\n", __func__);
+			break;
+		case bmdOutputFrameDropped:
+			printf("%s() frame dropped\n", __func__);
+			break;
+		case bmdOutputFrameFlushed:
+			printf("%s() frame flushed\n", __func__);
+			break;
+		default:
+			printf("%s() default, check me result 0x%x\n", __func__, result);
+	} 
 
 	return S_OK;
 }

@@ -21,6 +21,9 @@ std::list<class frameinput *> m_inputs;
 std::list<class filter *> m_filters;
 pthread_t gtid = 0;
 
+static time_t g_startupTime = 0;
+static char g_startupTimeASCII[64];
+
 struct thread_monitor_s
 {
 	int terminate;
@@ -102,11 +105,12 @@ static void *threadfunc(void *p)
 {
 	struct thread_monitor_s *ctx = (struct thread_monitor_s *)p;
 
+	int colx = 8;
 	time_t lastConsoleUpdate = 0;
 	while (!ctx->terminate) {
 		usleep(100 * 1000);
 
-		int line = 8;
+		int line = 6;
 
 		uint32_t frameNr[3];
 		struct timeval ts[3];
@@ -128,7 +132,7 @@ static void *threadfunc(void *p)
 		char msg[256], msg2[256], msg3[256], msg4[256];
 
 		sprintf(msg2, "Cello Version: %s", GIT_VERSION);
-		ctx->fpbw->addMessage(msg2, 12, line++);
+		ctx->fpbw->addMessage(msg2, colx, line++);
 		line++;
 
 		/* Date / time */
@@ -137,17 +141,19 @@ static void *threadfunc(void *p)
 		char str[128];
 		sprintf(str, "%s", ctime(&now));
 		str[ strlen(str) - 1] = 0;
-		ctx->fpbw->addMessage(str, 12, line++);
+		ctx->fpbw->addMessage(str, colx, line++);
 
 		line++;
 
 		/* Signal formats */
+		sprintf(msg2, "    started: %s", g_startupTimeASCII);
+		ctx->fpbw->addMessage(msg2, colx, line++);
 
 		sprintf(msg2, "  -> output: %s", ctx->fo->humanFormatDescription());
-		ctx->fpbw->addMessage(msg2, 12, line++);
+		ctx->fpbw->addMessage(msg2, colx, line++);
 
 		sprintf(msg2, "  <-  input: %s", ctx->fi->humanFormatDescription());
-		ctx->fpbw->addMessage(msg2, 12, line++);
+		ctx->fpbw->addMessage(msg2, colx, line++);
 
 		if (ctx->fi->isMissingMetadata()) {
 			los = 1;
@@ -157,22 +163,25 @@ static void *threadfunc(void *p)
 			sprintf(msg, "    latency: %dms", ms);
 		else
 			sprintf(msg, "    latency: No signal");
-		ctx->fpbw->addMessage(msg, 12, line++);
+		ctx->fpbw->addMessage(msg, colx, line++);
 
 		line++;
 
+		sprintf(msg2, " last error: %s", ctx->fi->getLastErrorTimeASCII());
+		ctx->fpbw->addMessage(msg2, colx, line++);
+
 		sprintf(msg2, "lost frames: %d", ctx->fi->getLostFrameCount());
-		ctx->fpbw->addMessage(msg2, 12, line++);
+		ctx->fpbw->addMessage(msg2, colx, line++);
 
 		sprintf(msg3, " dup frames: %d", ctx->fi->getDuplicateFrameCount());
-		ctx->fpbw->addMessage(msg3, 12, line++);
+		ctx->fpbw->addMessage(msg3, colx, line++);
 
 		sprintf(msg4, " lost codes: %d", ctx->fi->getLostCodesCount());
-		ctx->fpbw->addMessage(msg4, 12, line++);
+		ctx->fpbw->addMessage(msg4, colx, line++);
 
 		if (ctx->fi->isMissingMetadata()) {
 			line++;
-			ctx->fpbw->addMessage("Metadata missing, check signal path", 12, line++);
+			ctx->fpbw->addMessage("Metadata missing, check signal path", colx, line++);
 		}
 
 		if (now != lastConsoleUpdate) {
@@ -227,6 +236,10 @@ int main(int argc, char *argv[])
 			exit(0);
 		}
 	}
+
+	time(&g_startupTime);
+	sprintf(g_startupTimeASCII, "%s", ctime(&g_startupTime));
+	g_startupTimeASCII[ strlen(g_startupTimeASCII) - 1] = 0;
 
 	/* Decklink port #0 - Input - source material, we'll metadata stamp this and output it */
 	frameinputdecklink2 *fid2 = new frameinputdecklink2();

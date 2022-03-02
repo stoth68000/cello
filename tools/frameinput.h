@@ -33,7 +33,14 @@ public:
 	void setMissingMetadata(int n);
 	int isMissingMetadata();
 
+	const char *getLastErrorTimeASCII();
+
 private:
+	void updateErrorTime();
+
+	time_t m_lastErrorTime = 0;
+	char m_lastErrorTimeASCII[64];
+
 	bool m_losTerminate;
 
 	int m_lostFrames;

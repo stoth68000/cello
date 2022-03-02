@@ -35,7 +35,7 @@ const char *frameprocessor::getName()
 
 const char *frameprocessor::humanFormatDescription()
 {
-	sprintf(asciiFormat, "%dx%d %03.02f(%c) { %d, %d }",
+	sprintf(asciiFormat, "%dx%d %03.02f%c { %d, %d }",
 		width, height,
 		(double)timebase.num / (double)timebase.den,
 		progressive ? 'p' : 'i',

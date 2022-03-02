@@ -10,10 +10,24 @@ frameinput::frameinput()
 	m_dupFrames = 0;
 	m_missingMetadata = 1;
 	m_lostCodes = 0;
+	strcpy(m_lastErrorTimeASCII, "N/A");
+	m_lastErrorTime = 0;
 }
 
 frameinput::~frameinput()
 {
+}
+
+void frameinput::updateErrorTime()
+{
+	time(&m_lastErrorTime);
+	sprintf(&m_lastErrorTimeASCII[0], "%s", ctime(&m_lastErrorTime));
+	m_lastErrorTimeASCII[ strlen(m_lastErrorTimeASCII) - 1 ] = 0;
+}
+
+const char *frameinput::getLastErrorTimeASCII()
+{
+	return &m_lastErrorTimeASCII[0];
 }
 
 void frameinput::setLosTerminate(bool v)
@@ -39,11 +53,13 @@ int frameinput::getDuplicateFrameCount()
 void frameinput::addLostFrameCount(int n)
 {
         m_lostFrames += n;
+		updateErrorTime();
 }
 
 void frameinput::incDuplicateFrameCount()
 {
         m_dupFrames++;
+		updateErrorTime();
 }
 
 int frameinput::getLostCodesCount()
@@ -55,11 +71,13 @@ void frameinput::setMissingMetadata(int n)
 {
 	if (m_missingMetadata == 0 && n == 1) {
 		m_lostCodes++;
+		updateErrorTime();
 	}
 
 	if (m_missingMetadata == 1 && n == 0) {
 		m_dupFrames = 0;
 		m_lostFrames = 0;
+		updateErrorTime();
 	}
 
     m_missingMetadata = n ? 1 : 0;
