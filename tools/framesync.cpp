@@ -123,11 +123,6 @@ static void *threadfunc(void *p)
 
 		ctx->fpbw->clearMessages();
 
-		int los = 0;
-		if (frameNr[0] && frameNr[1] == 0) {
-			los = 1;
-		}
-
 		/* Basic I/O connection information */
 		char msg[256], msg2[256], msg3[256], msg4[256];
 
@@ -154,6 +149,11 @@ static void *threadfunc(void *p)
 
 		sprintf(msg2, "  <-  input: %s", ctx->fi->humanFormatDescription());
 		ctx->fpbw->addMessage(msg2, colx, line++);
+
+		int los = 0;
+		if (frameNr[0] && frameNr[1] == 0) {
+			los = 1;
+		}
 
 		if (ctx->fi->isMissingMetadata()) {
 			los = 1;
