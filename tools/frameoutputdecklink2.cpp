@@ -160,9 +160,9 @@ frameoutputdecklink2::frameoutputdecklink2(frameinput *input)
 , video_codec(NULL)
 , audio_codec(NULL)
 , have_video(0)
-, encode_video(0)
+, m_encode_video(0)
 , have_audio(0)
-, encode_audio(0)
+, m_encode_audio(0)
 {
 #if LOCAL_DEBUG
 	printf("%s()\n", __func__);
@@ -216,13 +216,13 @@ printf("Attempting to open .... %s\n", devname);
 		//add_stream(&video_st, ofmt_ctx, &video_codec, ofmt->video_codec);
 		add_stream(&video_st, ofmt_ctx, &video_codec, AV_CODEC_ID_V210, getWidth(), getHeight(), getTimebase());
 		have_video = 1;
-		encode_video = 1;
+		m_encode_video = 1;
 	}
 #if 0
 	if (ofmt->audio_codec != AV_CODEC_ID_NONE) {
 		//add_stream(&audio_st, ofmt_ctx, &audio_codec, ofmt->audio_codec);
 		have_audio = 0;
-		encode_audio = 0;
+		m_encode_audio = 0;
 	}
 #endif
 
@@ -297,6 +297,7 @@ int frameoutputdecklink2::threadRun()
 			continue;
 		}
 
+		/* One time cost, allocate a V210 encoder */
 		if (codec == NULL) {
 
 			codec = avcodec_alloc_context3(enc);
@@ -350,8 +351,10 @@ int frameoutputdecklink2::threadRun()
 			fprintf(stderr, "unable to send avframe, ret = %d\n", ret);
 		}
 		if (!decoded) {
-			fprintf(stderr, "No decoded packet yet\n");
-			return S_OK;
+			fprintf(stderr, "No packets ready yet\n");
+			/* Error, cleanup */
+			av_frame_free(&frm);
+			continue;
 		}
 
 		AVPacket *pkt = av_packet_alloc();
@@ -365,8 +368,8 @@ int frameoutputdecklink2::threadRun()
 		}
 
 		unsigned int burnval = (unsigned int)getFramesProcessed();
-		if (encode_video &&
-			(!encode_audio || av_compare_ts(video_st.next_pts, video_st.enc->time_base,
+		if (m_encode_video &&
+			(!m_encode_audio || av_compare_ts(video_st.next_pts, video_st.enc->time_base,
                                                         audio_st.next_pts, audio_st.enc->time_base) <= 0)) {
 
 			/* Burn any V210 as necessary */
@@ -418,7 +421,7 @@ int frameoutputdecklink2::threadRun()
 
 		/* Cleanup */
 		av_frame_free(&frm);
-		av_packet_free(&pkt);
+		av_packet_free(&pkt); /* TODO: Is it legit to free this after doing the interleaved_write? */
 	}
 	av_write_trailer(ofmt_ctx);
 	if (have_video)

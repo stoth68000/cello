@@ -118,7 +118,7 @@ static void *threadfunc(void *p)
 		int line = 6;
 
 		/* gather raw stats from input and output devices */
-		uint32_t frameNr[3];
+		uint32_t frameNr[2];
 		struct timeval ts[3];
 		ctx->fo->getMetadata(&frameNr[0], &ts[0]);
 		ctx->fi->getMetadata(&frameNr[1], &ts[1]);

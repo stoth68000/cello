@@ -59,9 +59,9 @@ private:
 	AVCodec *audio_codec;
 
 	int have_video;
-	int encode_video;
+	int m_encode_video;
 	int have_audio;
-	int encode_audio;
+	int m_encode_audio;
 };
 
 #endif /* FRAMEOUTPUTDECKLINK2_H */
