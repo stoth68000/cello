@@ -107,20 +107,27 @@ static void *threadfunc(void *p)
 
 	int colx = 8;
 	time_t lastConsoleUpdate = 0;
+
+	/* Multiple times per second, query overall video stats
+	 * and prepare the OSD to render those stats.
+	 * Also, every second, output stats to console.
+	 */
 	while (!ctx->terminate) {
 		usleep(100 * 1000);
 
 		int line = 6;
 
+		/* gather raw stats from input and output devices */
 		uint32_t frameNr[3];
 		struct timeval ts[3];
 		ctx->fo->getMetadata(&frameNr[0], &ts[0]);
 		ctx->fi->getMetadata(&frameNr[1], &ts[1]);
 
-		frameNr[2] = frameNr[1] - frameNr[0];
+		/* compute blackbox roundtrip time in ms */
 		_timeval_subtract(&ts[2], &ts[0], &ts[1]);
 		int64_t ms = _timediff_to_msecs(&ts[2]);
 
+		/* Erase any previous OSD messages */
 		ctx->fpbw->clearMessages();
 
 		/* Basic I/O connection information */
@@ -130,7 +137,7 @@ static void *threadfunc(void *p)
 		ctx->fpbw->addMessage(msg2, colx, line++);
 		line++;
 
-		/* Date / time */
+		/* Output current Date / time */
 		time_t now;
 		time(&now);
 		char str[128];
@@ -140,16 +147,18 @@ static void *threadfunc(void *p)
 
 		line++;
 
-		/* Signal formats */
+		/* Application start time */
 		sprintf(msg2, "    started: %s", g_startupTimeASCII);
 		ctx->fpbw->addMessage(msg2, colx, line++);
 
+		/* Signal formats */
 		sprintf(msg2, "  -> output: %s", ctx->fo->humanFormatDescription());
 		ctx->fpbw->addMessage(msg2, colx, line++);
 
 		sprintf(msg2, "  <-  input: %s", ctx->fi->humanFormatDescription());
 		ctx->fpbw->addMessage(msg2, colx, line++);
 
+		/* Render conditions based on LOS (Loss of Signal) */
 		int los = 0;
 		if (frameNr[0] && frameNr[1] == 0) {
 			los = 1;
@@ -179,11 +188,13 @@ static void *threadfunc(void *p)
 		sprintf(msg4, " lost codes: %d", ctx->fi->getLostCodesCount());
 		ctx->fpbw->addMessage(msg4, colx, line++);
 
+		/* The burned in codes were missing from the input video, warn the operator. */
 		if (ctx->fi->isMissingMetadata()) {
 			line++;
 			ctx->fpbw->addMessage("Metadata missing, check signal path", colx, line++);
 		}
 
+		/* Report stats to console every second */
 		if (now != lastConsoleUpdate) {
 			lastConsoleUpdate = now;
 
