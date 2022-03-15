@@ -4,6 +4,7 @@
 #include "frameprocessor.h"
 #include "framemetadata.h"
 #include "threadbase.h"
+#include "hires-av-debug.h"
 
 class frameinput;
 
@@ -21,13 +22,19 @@ public:
 	int pause();
 	int play();
 
+	void frameTransmit();
+
+	uint32_t getFifoDepth();
+	uint32_t getFifoDepthMS();
+
 private:
 	uint64_t lastRenderedFrameId;
+	struct hires_av_ctx_s m_iomonitor;
 
 protected:
 	int minQueueDepth;
 	int playing;
-
+	uint32_t m_fifodepth;
 };
 
 #endif /* FRAMEOUTPUT_H */

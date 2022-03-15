@@ -3,6 +3,8 @@
 
 #include "videoformats.h"
 
+#include "osd.h"
+
 #define LOCAL_DEBUG 0
 
 frameoutputdecklink::frameoutputdecklink(frameinput *input)
@@ -113,7 +115,7 @@ int frameoutputdecklink::hardware_open(int portnr)
 
 	pOutput->StartScheduledPlayback(0, 100, 1.0);
 
-	for (int i = 0; i < 7; i++)
+	for (int i = 0; i < 24; i++)
 		ScheduleNextPrerollFrame();
 
 	threadStart();
@@ -196,6 +198,17 @@ int frameoutputdecklink::threadRun()
 			}
 		}
 
+		unsigned int burnval = (unsigned int)getFramesProcessed();
+
+		/* Optional. Burn the framenumber into the frame as a string for easy human consumption. */
+		char txt[64];
+		sprintf(txt, "%12d", burnval);
+
+		struct vc8x0_display_context dc;
+		vc8x0_display_init(&dc);
+		vc8x0_display_render_reset(&dc, frm->data[0], frm->width, frm->linesize[0]);
+		vc8x0_display_render_string(&dc, txt, strlen(txt), 0, 3);
+
 		/* Decode the frame from avcodec 422p10le back to V210 */
 		int decoded = 0;
 		int ret = avcodec_send_frame(codec, frm);
@@ -260,7 +273,7 @@ int frameoutputdecklink::threadRun()
 			memcpy(dst, src, instride);
 		}
 
-		unsigned int burnval = (unsigned int)getFramesProcessed();
+		
 		if (getWriteMetadataOnArrival()) {
 			/* Line 0 - Frame counter */
 			V210_write_32bit_value((void *)ptr, referenceFrame->GetRowBytes(), burnval, V210_BOX_HEIGHT * 0, 0);
@@ -279,8 +292,8 @@ int frameoutputdecklink::threadRun()
 #if 0
 		printf("output frameNr = %d\n", burnval);
 #endif
+		frameTransmit();
 		ScheduleNextFrame(false, referenceFrame);
-		incrementFramesProcessed();
 
 		/* Cleanup */
 		av_frame_free(&frm);
@@ -301,7 +314,7 @@ HRESULT frameoutputdecklink::RenderAudioSamples(bool preroll)
 HRESULT frameoutputdecklink::ScheduledPlaybackHasStopped()
 {
 	printf("%s()\n", __func__);
-        return S_OK;
+	return S_OK;
 }
 
 HRESULT frameoutputdecklink::ScheduledFrameCompleted(IDeckLinkVideoFrame *completedFrame, BMDOutputFrameCompletionResult result)
@@ -348,16 +361,14 @@ void frameoutputdecklink::ScheduleNextFrame(bool prerolling, IDeckLinkMutableVid
 			return;
 	}
 
-	uint32_t v;
-	pOutput->GetBufferedVideoFrameCount(&v);
-	if (v <= 2) {
-		printf("\t\t%d\n", v);
-	}
+	pOutput->GetBufferedVideoFrameCount(&m_fifodepth);
 
 	if (pOutput->ScheduleVideoFrame(frame, (m_totalFramesScheduled * getTimebaseDen()), getTimebaseDen(), getTimebaseNum()) != S_OK) {
 		fprintf(stderr, "Send failed\n");
 		return;
 	}
+
+	incrementFramesProcessed();
 
 	//printf("Frame send to hw\n");
 	m_totalFramesScheduled += 1;

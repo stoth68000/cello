@@ -132,6 +132,9 @@ int frameinputdecklink2::threadRun()
 			av_packet_free(&pkt);
 			continue;
 		}
+
+		frameArrived();
+
 #if LOCAL_DEBUG
 		printf("stream_index = %d, pts = %" PRIu64 ", size = %d\n",
 			pkt->stream_index,
@@ -180,7 +183,7 @@ int frameinputdecklink2::threadRun()
 			lastFrameNr = frameNr;
 
 #if 0
-printf("input frameNr = %d, sec %lu, usec %lu\n", frameNr, ts.tv_sec, ts.tv_usec);
+printf(" input frameNr = %d, sec %lu, usec %lu\n", frameNr, ts.tv_sec, ts.tv_usec);
 #endif
 
 			if (frameNr == 0) {

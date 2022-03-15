@@ -39,6 +39,7 @@ public:
 	AVRational getTimebase() { return timebase; };
 	int getTimebaseNum() { return timebase.num; };
 	int getTimebaseDen() { return timebase.den; };
+	double getTimebaseMs() { return ((double)timebase.den / (double)timebase.num) * 1000.0; };
 	double getFPS();
 
 	void setFrameScaleFactor(double f) { frameScaleFactor = f; };

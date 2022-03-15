@@ -37,6 +37,8 @@ SRC += frameoutputdecklink2.cpp
 SRC += frameoutputndi.cpp
 SRC += framepipe.cpp
 SRC += framepipe_burnwriter.cpp
+SRC += kl-lineartrend.c
+SRC += logger.c
 
 bin_PROGRAMS  = cello
 

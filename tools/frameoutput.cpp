@@ -6,6 +6,7 @@ frameoutput::frameoutput(frameinput *input)
 , framemetadata()
 , threadbase((char *)"frame output")
 , lastRenderedFrameId(0)
+, m_fifodepth(0xffff)
 {
 	minQueueDepth = 0;
 	playing = 1;
@@ -16,10 +17,24 @@ frameoutput::frameoutput(frameinput *input)
 		setTimebase(input->getTimebase());
 		setProgressive(input->getProgressive());
 	}
+	/* TODO: Hardcoded framerate */
+	hires_av_init(&m_iomonitor, 60000.0, 1001.0, 48000.0);
+
 }
 
 frameoutput::~frameoutput()
 {
+}
+
+uint32_t frameoutput::getFifoDepth()
+{
+	return m_fifodepth;
+}
+
+uint32_t frameoutput::getFifoDepthMS()
+{
+	double latency = m_fifodepth * getTimebaseMs();
+	return latency;
 }
 
 uint64_t frameoutput::getLastRenderedFrameId()
@@ -55,3 +70,9 @@ int frameoutput::play()
 	return 0;
 }
 
+void frameoutput::frameTransmit()
+{
+	hires_av_rx(&m_iomonitor, HIRES_AV_STREAM_VIDEO, 1);
+	hires_av_tx(&m_iomonitor, HIRES_AV_STREAM_VIDEO, 1);
+	//hires_av_summary_per_second(&m_iomonitor, 0);
+}

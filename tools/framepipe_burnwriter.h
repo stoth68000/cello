@@ -4,7 +4,7 @@
 #include "framepipe.h"
 #include "osd.h"
 
-#define FPBW_MAX_MESSAGES 16
+#define FPBW_MAX_MESSAGES 24
 
 class framepipe_burnwriter : public framepipe
 {

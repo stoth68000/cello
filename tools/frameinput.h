@@ -14,6 +14,8 @@
 #include "frameprocessor.h"
 #include "framemetadata.h"
 #include "threadbase.h"
+#include "hires-av-debug.h"
+#include "kl-lineartrend.h"
 
 class frameinput : public frameprocessor, public framemetadata, public threadbase
 {
@@ -32,8 +34,13 @@ public:
 	void incDuplicateFrameCount();
 	void setMissingMetadata(int n);
 	int isMissingMetadata();
+	void resetErrorCounts();
 
 	const char *getLastErrorTimeASCII();
+
+	void frameArrived();
+
+	void setPrintIOMonitor(bool v) { m_printIOMonitor = v; };
 
 private:
 	void updateErrorTime();
@@ -47,6 +54,13 @@ private:
 	int m_dupFrames;
 	int m_missingMetadata;
 	int m_lostCodes;
+	struct hires_av_ctx_s m_iomonitor;
+	bool m_printIOMonitor;
+
+	/* Trending */
+	double m_trendCounter;
+	time_t m_lastTrendUpdate;
+	struct kllineartrend_context_s *m_iotrend;
 };
 
 #endif /* FRAMEINPUT_H */

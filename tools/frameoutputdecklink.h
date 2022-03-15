@@ -35,6 +35,8 @@ private:
 	IDeckLinkVideoFrame *pFrame;
 	//IDeckLinkMutableVideoFrame *referenceFrame;
 	uint64_t m_totalFramesScheduled;
+
+protected:
 	int m_running;
 
 private:

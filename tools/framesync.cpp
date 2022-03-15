@@ -12,6 +12,7 @@
 #include "frameoutputdecklink2.h"
 #include "framepipe_burnwriter.h"
 #include "filtervectorscope.h"
+#include "logger.h"
 
 #include <list>
 using namespace std;
@@ -23,6 +24,7 @@ pthread_t gtid = 0;
 
 static time_t g_startupTime = 0;
 static char g_startupTimeASCII[64];
+void *g_log = NULL;
 
 struct thread_monitor_s
 {
@@ -105,8 +107,12 @@ static void *threadfunc(void *p)
 {
 	struct thread_monitor_s *ctx = (struct thread_monitor_s *)p;
 
-	int colx = 8;
+	int colx = 10;
 	time_t lastConsoleUpdate = 0;
+
+	cello_logger_printf(g_log, "Cello Version: %s", GIT_VERSION);
+	cello_logger_printf(g_log, "-> output: %s", ctx->fo->humanFormatDescription());
+	cello_logger_printf(g_log, "<-  input: %s", ctx->fi->humanFormatDescription());
 
 	/* Multiple times per second, query overall video stats
 	 * and prepare the OSD to render those stats.
@@ -123,15 +129,24 @@ static void *threadfunc(void *p)
 		ctx->fo->getMetadata(&frameNr[0], &ts[0]);
 		ctx->fi->getMetadata(&frameNr[1], &ts[1]);
 
-		/* compute blackbox roundtrip time in ms */
+		/* compute blackbox roundtrip time in ms, includes preroll fifo */
 		_timeval_subtract(&ts[2], &ts[0], &ts[1]);
 		int64_t ms = _timediff_to_msecs(&ts[2]);
+
+		/* Subtract current preroll fifo */
+		int64_t fifolatency = ctx->fo->getFifoDepthMS();
+		//printf("ms %" PRIi64 ", fifolatency %" PRIi64 "\n", ms, fifolatency);
+		ms -= fifolatency;
+		if (ms < 0) {
+			/* We can be fractionally less than a ms on startup, don't show a negative number. */
+			ms = 0;
+		}
 
 		/* Erase any previous OSD messages */
 		ctx->fpbw->clearMessages();
 
 		/* Basic I/O connection information */
-		char msg[256], msg2[256], msg3[256], msg4[256];
+		char msg[256], msg2[256], msg3[256], msg4[256], msg5[64];
 
 		sprintf(msg2, "Cello Version: %s", GIT_VERSION);
 		ctx->fpbw->addMessage(msg2, colx, line++);
@@ -188,6 +203,9 @@ static void *threadfunc(void *p)
 		sprintf(msg4, " lost codes: %d", ctx->fi->getLostCodesCount());
 		ctx->fpbw->addMessage(msg4, colx, line++);
 
+		sprintf(msg5, " fifo depth: %d", ctx->fo->getFifoDepth());
+		ctx->fpbw->addMessage(msg5, colx, line++);
+
 		/* The burned in codes were missing from the input video, warn the operator. */
 		if (ctx->fi->isMissingMetadata()) {
 			line++;
@@ -201,8 +219,11 @@ static void *threadfunc(void *p)
 			char ts[64];
 			sprintf(ts, ctime(&now));
 			ts[ strlen(ts) - 1] = 0;
-			printf("%s: %s", ts, msg);
-			printf("\t%s %s %s\n", msg2, msg3, msg4);
+			//printf("%s: %s", ts, msg);
+			//printf("\t%s %s %s %s\n", msg2, msg3, msg4, msg5);
+
+			cello_logger_printf(g_log, "%s  %s %s %s %s", msg, msg2, msg3, msg4, msg5);
+
 		}
 	}
 
@@ -252,9 +273,18 @@ int main(int argc, char *argv[])
 	sprintf(g_startupTimeASCII, "%s", ctime(&g_startupTime));
 	g_startupTimeASCII[ strlen(g_startupTimeASCII) - 1] = 0;
 
+	g_log = cello_logger_alloc(NULL);
+	if (!g_log) {
+		fprintf(stderr, "Unable to open logfile\n");
+		exit(1);
+	}
+
+	cello_logger_printf(g_log, "Starting on pid %d", getpid());
+
 	/* Decklink port #0 - Input - source material, we'll metadata stamp this and output it */
 	frameinputdecklink2 *fid2 = new frameinputdecklink2();
 	//fid2->setDebug(true);
+	//fid2->setPrintIOMonitor(true);
 	fid2->hardware_open(0);
 	m_inputs.push_back(fid2);
 
@@ -272,7 +302,11 @@ int main(int argc, char *argv[])
 	fp->addOutputQueue( fod2->getQueue() );
 	fp->threadStart();
 
-// while 1
+#if 0
+	while (1) {
+		usleep(50 * 1000);
+	}
+#endif
 
 	/* Decklink port #3 - Input - source material post workflow, we'll analyze the metadata */
 	fid2 = new frameinputdecklink2();
@@ -397,6 +431,11 @@ int main(int argc, char *argv[])
 			}
 		}
 
+		if ((strcasecmp(line, "reset") == 0) || (strcasecmp(line, "r") == 0)) {
+			printf("Resetting error counts\n");
+			fid2->resetErrorCounts();
+		}
+
 		if (strcasecmp(line, "s") == 0) {
 			int i = 0;
 			for (ei = m_inputs.begin(); ei != m_inputs.end(); ++ei) {
@@ -459,6 +498,9 @@ int main(int argc, char *argv[])
 	//delete fon[0];
 	//delete fon[1];
 	//delete fid;
+
+	cello_logger_printf(g_log, "Stopping on pid %d", getpid());
+	cello_logger_free(g_log);
 
 	return 0;
 }
